@@ -31,6 +31,12 @@ class AccessTokenManager{
       return cachedAccess
     }
 
+    let hashDataPermanent = this.genHashData(identifier, access, null, true)
+    cachedAccess = this.cache[`${hashDataPermanent}_${token}`]
+    if(typeof cachedAccess === "boolean"){
+      return cachedAccess
+    }
+
     // If no hit on cache, calculate expected token for today
     let expectedToken = this.genToken(identifier, access)
     if(token == expectedToken){
@@ -40,23 +46,36 @@ class AccessTokenManager{
 
     //Try day before
     expectedToken = this.genToken(identifier, access, -1)
-    let result = expectedToken == token
+    if(token == expectedToken){
+      this.cache[`${hashDataYesterday}_${token}`] = result;
+      return true;
+    }
 
-    this.cache[`${hashDataYesterday}_${token}`] = result;
-    return result;
+    //Try permanent
+    expectedToken = this.genToken(identifier, access, null, true)
+    if(token == expectedToken){
+      this.cache[`${hashDataPermanent}_${token}`] = result;
+      return true;
+    }
+
+    return false;
   }
 
-  genToken(identifier, access, dateOffset){
-    let hashData = this.genHashData(identifier, access, dateOffset)
+  genToken(identifier, access, dateOffset, permanent){
+    let hashData = this.genHashData(identifier, access, dateOffset, permanent)
     let token = crypto.createHmac('sha256', this.secret).update(hashData).digest('hex');
     return token
   }
 
-  genHashData(identifier, access, dateOffset){
-    dateOffset = dateOffset || 0
-    let d = new Date()
-    d.setDate(d.getDate() + dateOffset)
-    return `${identifier}_${access}_${d.toDateString()}`
+  genHashData(identifier, access, dateOffset, permanent){
+    if(permanent === true){
+      return `${identifier}_${access}_perm`
+    } else {
+      dateOffset = dateOffset || 0
+      let d = new Date()
+      d.setDate(d.getDate() + dateOffset)
+      return `${identifier}_${access}_${d.toDateString()}`
+    }
   }
 
   validateAccessReadWriteThrow(token, identifier, requireWrite){
