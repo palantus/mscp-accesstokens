@@ -47,14 +47,14 @@ class AccessTokenManager{
     //Try day before
     expectedToken = this.genToken(identifier, access, -1)
     if(token == expectedToken){
-      this.cache[`${hashDataYesterday}_${token}`] = result;
+      this.cache[`${hashDataYesterday}_${token}`] = true;
       return true;
     }
 
     //Try permanent
     expectedToken = this.genToken(identifier, access, null, true)
     if(token == expectedToken){
-      this.cache[`${hashDataPermanent}_${token}`] = result;
+      this.cache[`${hashDataPermanent}_${token}`] = true;
       return true;
     }
 
